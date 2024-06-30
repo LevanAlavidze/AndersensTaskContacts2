@@ -58,6 +58,15 @@ class ContactListAdapter(
         contactsList = newList
         diffResult.dispatchUpdatesTo(this)
     }
+    fun updateContact(updatedContact: Contacts) {
+        val index = contactsList.indexOfFirst { it.id == updatedContact.id }
+        if (index != -1) {
+            contactsList = contactsList.toMutableList().apply {
+                set(index, updatedContact)
+            }
+            notifyItemChanged(index)
+        }
+    }
 }
 
 class ContactViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

@@ -37,21 +37,17 @@ class ContactList : Fragment() {
         // Initialize the adapter
         contactListAdapter = ContactListAdapter(requireContext(), emptyList()) { contactPosition: Int, contact: Contacts ->
             sharedViewModel.selectContact(contact)
-            openContactDetails()
+            if (isTwoPane) {
+                openContactDetailsInTwoPane()
+            } else {
+                openContactDetails()
+            }
         }
         recyclerView.adapter = contactListAdapter
 
         // Observe contacts list from ViewModel
         sharedViewModel.contactsList.observe(viewLifecycleOwner) { contacts ->
-            contactListAdapter = ContactListAdapter(requireContext(), contacts) { contactPosition: Int, contact: Contacts ->
-                sharedViewModel.selectContact(contact)
-                if (isTwoPane) {
-                    openContactDetailsInTwoPane()
-                } else {
-                    openContactDetails()
-                }
-            }
-            recyclerView.adapter = contactListAdapter
+            contactListAdapter.updateList(contacts)
         }
 
         // Initialize and set SearchView listener
@@ -85,6 +81,10 @@ class ContactList : Fragment() {
             .addToBackStack(null)
             .commit()
     }
+    fun updateContactInAdapter(updatedContact: Contacts) {
+        contactListAdapter.updateContact(updatedContact)
+    }
+
     private fun openContactDetailsInTwoPane() {
         val fragment = ContactDetails()
         parentFragmentManager.beginTransaction()

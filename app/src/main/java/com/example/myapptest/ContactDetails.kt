@@ -13,11 +13,10 @@ import com.squareup.picasso.Picasso
 import androidx.fragment.app.activityViewModels
 
 class ContactDetails : Fragment() {
-    //ViewModel instance shared for the activity and fragments
     private val sharedViewModel: SharedViewModel by activityViewModels {
         SharedViewModelFactory(requireContext().applicationContext)
     }
-    private lateinit var contact: Contacts
+    private var contact: Contacts? = null
 
     private lateinit var contactNameEditText: EditText
     private lateinit var contactSurnameEditText: EditText
@@ -40,7 +39,7 @@ class ContactDetails : Fragment() {
         contactNumberEditText = view.findViewById(R.id.contact_number_details)
         contactImageView = view.findViewById(R.id.contact_image_details)
         saveButton = view.findViewById(R.id.save_button)
-        editButton = view.findViewById(R.id.edit_button) // Assuming you have an edit button in your layout
+        editButton = view.findViewById(R.id.edit_button)
 
         // Observe selected contact from SharedViewModel
         sharedViewModel.selectedContact.observe(viewLifecycleOwner) { selectedContact ->
@@ -48,20 +47,26 @@ class ContactDetails : Fragment() {
             updateUI(contact)
         }
 
-
         editButton.setOnClickListener {
             toggleEditMode()
         }
 
-
         saveButton.setOnClickListener {
-            contact.name = contactNameEditText.text.toString()
-            contact.surname = contactSurnameEditText.text.toString()
-            contact.number = contactNumberEditText.text.toString()
-            sharedViewModel.updateContact(contact)
-            toggleEditMode() // Exit editing mode
-            if (!isTwoPane()) {
-                parentFragmentManager.popBackStack()
+            contact?.let {
+                it.name = contactNameEditText.text.toString()
+                it.surname = contactSurnameEditText.text.toString()
+                it.number = contactNumberEditText.text.toString()
+                sharedViewModel.updateContact(it)
+                toggleEditMode() // Exit editing mode
+
+                // Notify adapter to update the specific contact
+                val contactListFragment = parentFragmentManager.findFragmentById(R.id.fragment_container) as? ContactList
+                contactListFragment?.updateContactInAdapter(it)
+
+                if (!isTwoPane()) {
+                    parentFragmentManager.popBackStack()
+                }
+                
             }
         }
 
@@ -79,11 +84,13 @@ class ContactDetails : Fragment() {
         return view
     }
 
-    private fun updateUI(contact: Contacts) {
-        contactNameEditText.setText(contact.name)
-        contactSurnameEditText.setText(contact.surname)
-        contactNumberEditText.setText(contact.number)
-        Picasso.get().load(contact.imageUrl).into(contactImageView)
+    private fun updateUI(contact: Contacts?) {
+        contact?.let {
+            contactNameEditText.setText(it.name)
+            contactSurnameEditText.setText(it.surname)
+            contactNumberEditText.setText(it.number)
+            Picasso.get().load(it.imageUrl).into(contactImageView)
+        }
     }
 
     private fun toggleEditMode() {
@@ -102,6 +109,7 @@ class ContactDetails : Fragment() {
             saveButton.visibility = View.GONE
         }
     }
+
     private fun isTwoPane(): Boolean {
         return activity?.findViewById<View?>(R.id.details_fragment_container) != null
     }

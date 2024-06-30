@@ -26,14 +26,14 @@ class SharedViewModel(context: Context) : ViewModel() {
     }
 
     fun updateContact(updatedContact: Contacts) {
-        val currentList = _contactsList.value.orEmpty().toMutableList()
-        val index = currentList.indexOfFirst { it.id == updatedContact.id }
-        if (index != -1) {
-            currentList[index] = updatedContact
-            _contactsList.value = currentList
-            saveContacts(currentList)
-        }
+        val updatedList = _contactsList.value?.map {
+            if (it.id == updatedContact.id) updatedContact else it
+        } ?: listOf()
+
+        _contactsList.value = updatedList
+        saveContacts(updatedList)  // Save updated list to SharedPreferences
     }
+
 
     private fun generatePredefinedContacts(): List<Contacts> {
         return listOf(
